@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import SidebarReplace from '../components/SidebarReplace.jsx'
 
@@ -59,105 +59,167 @@ export function initSidebarReplace() {
     })
   }
 
-  async function replaceMain(main) {
-    try {
-      if (!main || main.dataset.crxReplaced === '1') return
+  // Manager component: mounts once, observes for the main container,
+  // stores the found main node in state and runs the replacement pipeline
+  // whenever the main node changes.
+  function SidebarReplaceManager() {
+    const [mainNode, setMainNode] = useState(() => document.querySelector('[role="main"]'))
 
-      // prefer element-only traversal and fallback to querying the img directly
-      const buttonImgWrapper =
-        main?.firstElementChild?.firstElementChild?.firstElementChild ||
-        main?.querySelector('button')
-      if (!buttonImgWrapper) {
-        const found = await waitFor(() => main.querySelector('button'), 1500)
-        if (!found) console.warn('[CRXJS] Timed out waiting for button inside sidebar')
-      }
-      const btnWrap = main.querySelector('button') || buttonImgWrapper
-      const image = btnWrap?.querySelector('img') || btnWrap?.firstElementChild
-      if (!image) {
-        const found = await waitFor(() => btnWrap.querySelector('img'), 1500)
-        if (!found) console.warn('[CRXJS] Timed out waiting for img inside sidebar')
-      }
-
-      const img = btnWrap?.querySelector('img') || btnWrap?.firstElementChild || image
-
-      if (img?.tagName !== 'IMG' || btnWrap?.tagName !== 'BUTTON') {
-        console.warn('[CRXJS] Unexpected sidebar structure, cannot find cover image/button')
-        console.warn('[CRXJS] Structs', btnWrap, img)
-      }
-
-      const coverBtn = btnWrap
-      const coverImg = img
-      const title = main.querySelector('h1')
-      const subtitle = main.querySelector('h2')
-      const actions = findActionsContainer(main)
-
-      // ensure hidden holder exists before moving originals
-      let hidden = document.getElementById('crx-sidebar-hidden')
-      if (!hidden) {
-        hidden = document.createElement('div')
-        hidden.id = 'crx-sidebar-hidden'
-        hidden.style.cssText =
-          'position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;'
-        document.body.appendChild(hidden)
-      }
-
-      // move originals into hidden holder to preserve handlers
-      if (coverBtn) hidden.appendChild(coverBtn)
-      if (actions) hidden.appendChild(actions)
-
-      const coverSrc = coverImg?.src || null
-      const titleHtml = title ? title.innerHTML : null
-      const subtitleHtml = subtitle ? subtitle.innerHTML : null
-
-      const origButtons = actions ? Array.from(actions.querySelectorAll('button')) : []
-      const actionItems = origButtons.map(ob => {
-        const label = (ob.getAttribute('aria-label') || ob.textContent || '').trim()
-        return {
-          label,
-          onClick: () => {
-            try {
-              ob.click()
-            } catch (e) {}
-          },
-        }
+    useEffect(() => {
+      const obs = new MutationObserver(() => {
+        const m = document.querySelector('[role="main"]')
+        if (m !== mainNode) setMainNode(m)
       })
+      obs.observe(document.body, { childList: true, subtree: true, attributes: true })
+      return () => obs.disconnect()
+    }, [])
 
-      // clear main and render React component
-      while (main.firstChild) main.removeChild(main.firstChild)
-      const host = document.createElement('div')
-      main.appendChild(host)
+    useEffect(() => {
+      if (!mainNode) return
 
-      const root = createRoot(host)
-      root.render(
-        React.createElement(SidebarReplace, {
-          coverSrc,
-          titleHtml,
-          subtitleHtml,
-          actions: actionItems,
-        })
-      )
-      main.dataset.crxReplaced = '1'
-      // store root for potential cleanup
-      main.__crxRoot = root
-      console.log('[CRXJS] Sidebar content replaced (React)')
-    } catch (err) {
-      console.error('[CRXJS] Sidebar replace failed', err)
-    }
+      let cancelled = false
+
+      async function runPipeline(main) {
+        try {
+          if (!main) return
+          // avoid duplicate replacement if we've already mounted into this main
+          if (main.dataset && main.dataset.crxReplaced === '1' && main.__crxRoot) return
+
+          console.log('[CRXJS] Manager: starting replacement pipeline')
+
+          function localWaitFor(predicate, timeout = 1500) {
+            return new Promise(resolve => {
+              const val = predicate()
+              if (val) return resolve(val)
+              const obs = new MutationObserver(() => {
+                const v = predicate()
+                if (v) {
+                  obs.disconnect()
+                  clearTimeout(to)
+                  resolve(v)
+                }
+              })
+              obs.observe(document.body, { childList: true, subtree: true, attributes: true })
+              const to = setTimeout(() => {
+                obs.disconnect()
+                resolve(null)
+              }, timeout)
+            })
+          }
+
+          // locate cover/button and image
+          const buttonImgWrapper =
+            main?.firstElementChild?.firstElementChild?.firstElementChild ||
+            main?.querySelector('button')
+          if (!buttonImgWrapper) {
+            const found = await localWaitFor(() => main.querySelector('button'), 1500)
+            if (!found) console.warn('[CRXJS] Timed out waiting for button inside sidebar')
+          }
+          const btnWrap = main.querySelector('button') || buttonImgWrapper
+          const image = btnWrap?.querySelector('img') || btnWrap?.firstElementChild
+          if (!image) {
+            const found = await localWaitFor(() => btnWrap.querySelector('img'), 1500)
+            if (!found) console.warn('[CRXJS] Timed out waiting for img inside sidebar')
+          }
+
+          const img = btnWrap?.querySelector('img') || btnWrap?.firstElementChild || image
+
+          if (img?.tagName !== 'IMG' || btnWrap?.tagName !== 'BUTTON') {
+            console.warn('[CRXJS] Unexpected sidebar structure, cannot find cover image/button')
+            console.warn('[CRXJS] Structs', btnWrap, img)
+          }
+
+          const coverBtn = btnWrap
+          const coverImg = img
+          const title = main.querySelector('h1')
+          const subtitle = main.querySelector('h2')
+          const actions = findActionsContainer(main)
+
+          // ensure hidden holder exists before moving originals
+          let hidden = document.getElementById('crx-sidebar-hidden')
+          if (!hidden) {
+            hidden = document.createElement('div')
+            hidden.id = 'crx-sidebar-hidden'
+            hidden.style.cssText =
+              'position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;'
+            document.body.appendChild(hidden)
+          }
+
+          // move originals into hidden holder to preserve handlers
+          if (coverBtn) hidden.appendChild(coverBtn)
+          if (actions) hidden.appendChild(actions)
+
+          const coverSrc = coverImg?.src || null
+          const titleHtml = title ? title.innerHTML : null
+          const subtitleHtml = subtitle ? subtitle.innerHTML : null
+
+          const origButtons = actions ? Array.from(actions.querySelectorAll('button')) : []
+          const actionItems = origButtons.map(ob => {
+            const label = (ob.getAttribute('aria-label') || ob.textContent || '').trim()
+            return {
+              label,
+              onClick: () => {
+                try {
+                  ob.click()
+                } catch (e) {}
+              },
+            }
+          })
+
+          const props = { coverSrc, titleHtml, subtitleHtml, actions: actionItems }
+
+          // If we've already mounted the React root on this main, just update props
+          if (main.__crxRoot) {
+            try {
+              main.__crxRoot.render(React.createElement(SidebarReplace, props))
+              main.dataset.crxReplaced = '1'
+              console.log('[CRXJS] Manager: updated existing Sidebar React root')
+              return
+            } catch (e) {
+              console.warn('[CRXJS] Manager: failed to update existing root, will recreate', e)
+            }
+          }
+
+          // clear main and render React component (initial mount)
+          while (main.firstChild) main.removeChild(main.firstChild)
+          const host = document.createElement('div')
+          main.appendChild(host)
+
+          const root = createRoot(host)
+          root.render(React.createElement(SidebarReplace, props))
+          main.dataset.crxReplaced = '1'
+          main.__crxRoot = root
+          console.log('[CRXJS] Manager: Sidebar content replaced (React)')
+        } catch (err) {
+          console.error('[CRXJS] Manager pipeline failed', err)
+        }
+      }
+
+      runPipeline(mainNode)
+
+      return () => {
+        cancelled = true
+      }
+    }, [mainNode])
+
+    return null
   }
 
-  // observe for the role="main" container used by Google Maps
-  const observer = new MutationObserver(() => {
-    const main = document.querySelector('[role="main"]')
-    if (main) replaceMain(main)
-  })
+  // Ensure we mount the manager only once and keep a reference to the root for cleanup
+  let managerHost = document.getElementById('crx-sidebar-manager')
+  if (!managerHost) {
+    managerHost = document.createElement('div')
+    managerHost.id = 'crx-sidebar-manager'
+    // keep offscreen and non-interfering
+    managerHost.style.cssText =
+      'position:fixed; left:0; top:0; pointer-events:none; width:1px; height:1px; opacity:0;'
+    document.body.appendChild(managerHost)
+  }
 
-  observer.observe(document.body, { childList: true, subtree: true })
+  const managerRoot = createRoot(managerHost)
+  managerRoot.render(React.createElement(SidebarReplaceManager))
 
-  // run once immediately if already present
-  const existing = document.querySelector('[role="main"]')
-  if (existing) replaceMain(existing)
-
-  return () => observer.disconnect()
+  return () => managerRoot.unmount()
 }
 
 export default initSidebarReplace
