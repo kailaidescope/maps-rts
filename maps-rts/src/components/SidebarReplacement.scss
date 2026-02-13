@@ -1,38 +1,84 @@
 @use '../assets/Constants.scss' as *;
 
 #crx-sidebar-replace {
-  .crx-test-buttons {
-    padding: 5% 0;
-    display: flex;
-    width: 100%;
-    gap: 8%;
-    box-sizing: border-box;
+    .crx-test-buttons {
+        padding: 5% 0;
+        display: flex;
+        width: 100%;
+        gap: 8%;
+        box-sizing: border-box;
 
-    button {
-      padding: 8px 12px;
-      background-color: $ForestGreen;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      transition:
-        background-color 0.3s ease,
-        color 0.3s ease;
-      width: 100%;
+        button {
+            padding: 8px 12px;
+            background-color: $ForestGreen;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition:
+                background-color 0.3s ease,
+                color 0.3s ease;
+            width: 100%;
 
-      &:hover {
-        background-color: $GrassGreen;
-        color: $TextBlack;
-      }
+            &:hover {
+                background-color: $GrassGreen;
+                color: $TextBlack;
+            }
 
-      &#world-annihilator-button {
-        background-color: $HealthRed;
-        &:hover {
-          background-color: $DarkHealthRed;
-          color: $TextWhite;
+            &#world-annihilator-button {
+                background-color: $HealthRed;
+                &:hover {
+                    background-color: $DarkHealthRed;
+                    color: $TextWhite;
+                }
+            }
         }
-      }
     }
-  }
+
+    .crx-buildings-list {
+        padding: 12px 0 0 0;
+        margin-top: 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+        .crx-buildings-title {
+            font-weight: 600;
+            margin: 6px 0 8px 0;
+            color: $TextBlack;
+            font-size: 14px;
+        }
+
+        .crx-no-buildings {
+            color: rgba($TextBlack, 0.6);
+            font-size: 13px;
+            padding: 4px 0;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+
+            li {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 6px 8px;
+                border-radius: 6px;
+                background: rgba(0, 0, 0, 0.02);
+                margin-bottom: 6px;
+
+                strong {
+                    color: $TextBlack;
+                    font-size: 13px;
+                }
+
+                span {
+                    color: rgba($TextBlack, 0.6);
+                    font-size: 12px;
+                    margin-left: 8px;
+                }
+            }
+        }
+    }
 }

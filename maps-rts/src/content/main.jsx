@@ -8,22 +8,22 @@ console.log('[CRXJS] Hello world from content script!')
 
 // Enable bounding-box drag (middle click or alt+click)
 try {
-  initBoundingBox()
+    initBoundingBox()
 } catch (err) {
-  console.warn('Failed to initialize bounding box helper', err)
+    console.warn('Failed to initialize bounding box helper', err)
 }
 
 try {
-  initSidebarReplace()
+    initSidebarReplace()
 } catch (err) {
-  console.warn('Failed to initialize sidebar replacer', err)
+    console.warn('Failed to initialize sidebar replacer', err)
 }
 
 const container = document.createElement('div')
 container.id = 'crxjs-app'
 document.body.appendChild(container)
 createRoot(container).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
+    <StrictMode>
+        <App />
+    </StrictMode>
 )
