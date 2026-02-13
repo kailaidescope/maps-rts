@@ -13,9 +13,6 @@ function App() {
           <h1>HELLO CRXJS</h1>
         </div>
       )}
-      <div className={`popup-content opacity-100`}>
-          <h1>HELLO CRXJS</h1>
-        </div>
       <button className='toggle-button' onClick={toggle}>
         <img src={Logo} alt='CRXJS logo' className='button-icon' />
       </button>
