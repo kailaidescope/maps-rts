@@ -11,6 +11,22 @@ function parseCenterZoomFromUrl(url) {
         }
     }
 
+    // fallback: @lat,lng,NNNm where NNN is a distance in meters (Google Maps sometimes uses this)
+    const mMatch = url.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),([0-9\.]+)m/)
+    if (mMatch) {
+        const lat = parseFloat(mMatch[1])
+        const lng = parseFloat(mMatch[2])
+        const meters = parseFloat(mMatch[3])
+        // approximate conversion: assume the meters value represents the visible width
+        // so metersPerPixel ~= meters / window.innerWidth
+        const initialResolution = 156543.03392804097
+        const latRad = (lat * Math.PI) / 180
+        const metersPerPixel =
+            typeof window !== 'undefined' && window.innerWidth ? meters / window.innerWidth : meters
+        const zoom = Math.log2((initialResolution * Math.cos(latRad)) / metersPerPixel)
+        return { lat, lng, zoom: Math.max(0, zoom) }
+    }
+
     // fallback: !3dLAT!4dLNG sequences (zoom may not be available)
     const coordMatch = url.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/)
     if (coordMatch) {

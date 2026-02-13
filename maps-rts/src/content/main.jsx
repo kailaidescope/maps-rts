@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './views/App.jsx'
 import initBoundingBox from '../helpers/bbox.js'
-import initSidebarReplace from '../helpers/sidebarReplace.jsx'
+import initSidebarReplacement from '../helpers/initSidebarReplacement.jsx'
 
 console.log('[CRXJS] Hello world from content script!')
 
@@ -14,7 +14,7 @@ try {
 }
 
 try {
-    initSidebarReplace()
+    initSidebarReplacement()
 } catch (err) {
     console.warn('Failed to initialize sidebar replacer', err)
 }
