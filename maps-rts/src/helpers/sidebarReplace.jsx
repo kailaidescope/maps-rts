@@ -1,6 +1,6 @@
 import React, { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import SidebarReplace from '../components/SidebarReplace.jsx'
+import SidebarReplacement from '../components/SidebarReplacement.jsx'
 
 function ensureStyles() {
   if (document.getElementById('crx-sidebar-styles')) return
@@ -38,14 +38,28 @@ function findActionsContainer(main) {
 // Manager component: mounts once, observes for the main container,
 // stores the found main node in state and runs the replacement pipeline
 // whenever the main node changes.
-function SidebarReplaceManager() {
+function SidebarManager() {
   const [mainNode, setMainNode] = useState(() => document.querySelector('[role="main"]'))
   const [sidebarProps, setSidebarProps] = useState({
     coverSrc: null,
-    titleHtml: null,
-    subtitleHtml: null,
+    titleText: null,
+    subtitleText: null,
     actions: [],
   })
+
+  const updateProps = newProps => {
+    if (!newProps) return
+
+    Object.keys(newProps).forEach(key => {
+      if (newProps[key] !== null) {
+        setSidebarProps(prevProps => ({
+          ...prevProps,
+          [key]: newProps[key],
+        }))
+      }
+    })
+  }
+
   useEffect(() => {
     const obs = new MutationObserver(() => {
       const m = document.querySelector('[role="main"]')
@@ -56,7 +70,9 @@ function SidebarReplaceManager() {
   }, [])
 
   useEffect(() => {
-    if (!mainNode) return
+    if (!mainNode) {
+      return
+    }
     let cancelled = false
 
     async function runPipeline(main) {
@@ -124,7 +140,7 @@ function SidebarReplaceManager() {
           hidden = document.createElement('div')
           hidden.id = 'crx-sidebar-hidden'
           hidden.style.cssText =
-            'position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;'
+            'position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; display: none;'
           document.body.appendChild(hidden)
         }
 
@@ -133,8 +149,8 @@ function SidebarReplaceManager() {
         if (actions) hidden.appendChild(actions)
 
         const coverSrc = coverImg?.src || null
-        const titleHtml = title ? title.innerHTML || title.textContent || null : null
-        const subtitleHtml = subtitle ? subtitle.innerHTML || subtitle.textContent || null : null
+        const titleText = title ? title.textContent || null : null
+        const subtitleText = subtitle ? subtitle.textContent || null : null
 
         const origButtons = actions ? Array.from(actions.querySelectorAll('button')) : []
         const actionItems = origButtons.map(ob => {
@@ -149,14 +165,8 @@ function SidebarReplaceManager() {
           }
         })
 
-        const props = { coverSrc, titleHtml, subtitleHtml, actions: actionItems }
+        const props = { coverSrc, titleText, subtitleText, actions: actionItems }
 
-        // hide the original google sidebar (keep it in DOM for handlers)
-        try {
-          main.style.display = 'none'
-        } catch (e) {
-          main.hidden = true
-        }
         main.dataset.crxHidden = '1'
 
         // send props to our local SidebarReplace instance
@@ -175,10 +185,29 @@ function SidebarReplaceManager() {
   }, [mainNode])
 
   useEffect(() => {
+    if (!mainNode) return
+    console.log('[CRXJS] Running sidebar replacement with props', sidebarProps)
+
+    const main = mainNode // for easier reference
+
+    while (main.firstChild) main.removeChild(main.firstChild)
+    const host = document.createElement('div')
+    main.appendChild(host)
+
+    const root = createRoot(host)
+    root.render(
+      <StrictMode>
+        <SidebarReplacement {...sidebarProps} />
+      </StrictMode>
+    )
+    console.log('[CRXJS] Sidebar content replaced (React)')
+  }, [mainNode, sidebarProps])
+
+  useEffect(() => {
     console.log('[CRXJS] Sidebar props updated', sidebarProps)
   }, [sidebarProps])
 
-  return <SidebarReplace {...sidebarProps}></SidebarReplace>
+  return null
 }
 
 export function initSidebarReplace() {
@@ -192,7 +221,7 @@ export function initSidebarReplace() {
     managerHost.id = 'crx-sidebar-manager'
     // keep offscreen and non-interfering
     managerHost.style.cssText =
-      'position:fixed; left:0; top:0; pointer-events:none; width:1px; height:1px;'
+      'position:fixed; left:0; top:0; pointer-events:none; width:1px; height:1px; display: none;'
     document.body.appendChild(managerHost)
   }
 
@@ -201,8 +230,7 @@ export function initSidebarReplace() {
   const managerRoot = createRoot(managerHost)
   managerRoot.render(
     <StrictMode>
-      <h1>Hi!</h1>
-      <SidebarReplaceManager />
+      <SidebarManager />
     </StrictMode>
   )
 }
