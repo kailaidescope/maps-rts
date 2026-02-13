@@ -4,8 +4,10 @@
     .crx-test-buttons {
         padding: 5% 0;
         display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
         width: 100%;
-        gap: 8%;
+        gap: max(5%, 1rem);
         box-sizing: border-box;
 
         button {
@@ -19,7 +21,7 @@
             transition:
                 background-color 0.3s ease,
                 color 0.3s ease;
-            width: 100%;
+            width: 30%;
 
             &:hover {
                 background-color: $GrassGreen;

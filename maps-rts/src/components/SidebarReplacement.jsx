@@ -17,11 +17,14 @@ export default function SidebarReplacement({
         })
     }, [])
 
-    const addBuilding = useCallback(() => {
-        state.addBuildingToCity(titleText, { name: 'Fort', level: 1 })
+    const addBuilding = useCallback(
+        (name = 'Fort', level = 1) => {
+            state.addBuildingToCity(titleText, { name, level })
 
-        console.log("[CRXJS] Added 'Fort' building to city", state.cities)
-    }, [state, titleText])
+            console.log(`[CRXJS] Added '${name}' building (Lv ${level}) to city`, state.cities)
+        },
+        [state, titleText]
+    )
 
     const buildings = useMemo(() => {
         if (!titleText || !state.cities[titleText] || !state.cities[titleText].buildings) return {}
@@ -64,13 +67,20 @@ export default function SidebarReplacement({
                 </div>
             )}
 
-            <div className='crx-hello'>Hello World</div>
             <div className='crx-test-buttons'>
-                <button>Click me</button>
-                <button id='world-annihilator-button' onClick={addBuilding}>
+                <button onClick={() => addBuilding('Fort', 1)}>Add Fort (Lv 1)</button>
+                <button onClick={() => addBuilding('Barracks', 2)}>Add Barracks (Lv 2)</button>
+                <button onClick={() => addBuilding('Market', 1)}>Add Market (Lv 1)</button>
+                <button onClick={() => addBuilding('Castle', 1)}>Add Castle (Lv 1)</button>
+                <button onClick={() => addBuilding('Temple', 3)}>Add Temple (Lv 3)</button>
+                <button
+                    id='world-annihilator-button'
+                    onClick={() => addBuilding('World Annihilator', 10)}
+                >
                     World Annihilator
                 </button>
             </div>
+            <div className='crx-hello'>Constructed Buildings:</div>
 
             {/* Buildings list for this city */}
             <div className='crx-buildings-list'>
