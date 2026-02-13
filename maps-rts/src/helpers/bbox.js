@@ -53,6 +53,7 @@ function ensureStyles() {
     .crx-bbox-overlay { position: fixed; inset: 0; z-index: 9999999; cursor: crosshair; }
     .crx-bbox-rect { position: absolute; border: 2px dashed #ff9800; background: rgba(255,152,0,0.08); }
     .crx-bbox-toast { position: fixed; right: 12px; bottom: 12px; background: rgba(0,0,0,0.7); color: #fff; padding:6px 10px; border-radius:6px; font-size:13px; z-index:10000000 }
+    .crx-bbox-label { position: absolute; background: rgba(0,0,0,0.78); color: #fff; padding:6px 8px; border-radius:6px; font-size:12px; z-index:10000001; pointer-events:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.25); }
   `
   document.head.appendChild(s)
 }
@@ -63,6 +64,9 @@ export function initBoundingBox() {
 
   let overlay = null
   let rect = null
+  let label = null
+  let currentCenter = null
+  let currentZoom = 0
   let startX = 0
   let startY = 0
   let dragging = false
@@ -91,12 +95,31 @@ export function initBoundingBox() {
       rect = document.createElement('div')
       rect.className = 'crx-bbox-rect'
       overlay.appendChild(rect)
+      // label under the rectangle showing current bounds
+      label = document.createElement('div')
+      label.className = 'crx-bbox-label'
+      label.textContent = ''
+      overlay.appendChild(label)
       document.body.appendChild(overlay)
     }
 
     startX = e.clientX
     startY = e.clientY
     dragging = true
+
+    // parse center/zoom once at drag start so we can update bounds live
+    const parsedCenter = parseCenterZoomFromUrl(location.href)
+    if (!parsedCenter) {
+      showToast('Could not parse map center/zoom from URL')
+      if (overlay) overlay.remove()
+      overlay = null
+      rect = null
+      label = null
+      dragging = false
+      return
+    }
+    currentZoom = parsedCenter.zoom
+    currentCenter = { lat: parsedCenter.lat, lng: parsedCenter.lng }
 
     function onMove(ev) {
       if (!dragging) return
@@ -108,6 +131,35 @@ export function initBoundingBox() {
       rect.style.top = y + 'px'
       rect.style.width = w + 'px'
       rect.style.height = h + 'px'
+
+      if (currentCenter) {
+        const p1 = screenPointToLatLng(startX, startY, currentCenter, currentZoom)
+        const p2 = screenPointToLatLng(ev.clientX, ev.clientY, currentCenter, currentZoom)
+        const north = Math.max(p1.lat, p2.lat)
+        const south = Math.min(p1.lat, p2.lat)
+        const east = Math.max(p1.lng, p2.lng)
+        const west = Math.min(p1.lng, p2.lng)
+        const text = `N: ${north.toFixed(6)}  S: ${south.toFixed(6)}  E: ${east.toFixed(6)}  W: ${west.toFixed(6)}`
+        if (label) {
+          label.textContent = text
+          // position label below the rect, but flip above if it would overflow
+          label.style.left = x + 'px'
+          // prefer below
+          const belowTop = y + h + 8
+          // force layout then measure
+          label.style.top = belowTop + 'px'
+          const lw = label.offsetWidth || 0
+          const lh = label.offsetHeight || 0
+          if (x + lw > window.innerWidth - 8) {
+            label.style.left = Math.max(8, window.innerWidth - lw - 8) + 'px'
+          }
+          if (belowTop + lh > window.innerHeight - 8) {
+            // place above the rectangle when there's no space below
+            const aboveTop = Math.max(8, y - lh - 8)
+            label.style.top = aboveTop + 'px'
+          }
+        }
+      }
     }
 
     function onUp(ev) {
@@ -120,20 +172,17 @@ export function initBoundingBox() {
       const x2 = ev.clientX
       const y2 = ev.clientY
 
-      const centerZoom = parseCenterZoomFromUrl(location.href)
-      if (!centerZoom) {
+      if (!currentCenter) {
         showToast('Could not parse map center/zoom from URL')
         if (overlay) overlay.remove()
         overlay = null
         rect = null
+        label = null
         return
       }
 
-      const zoom = centerZoom.zoom
-      const center = { lat: centerZoom.lat, lng: centerZoom.lng }
-
-      const p1 = screenPointToLatLng(x1, y1, center, zoom)
-      const p2 = screenPointToLatLng(x2, y2, center, zoom)
+      const p1 = screenPointToLatLng(x1, y1, currentCenter, currentZoom)
+      const p2 = screenPointToLatLng(x2, y2, currentCenter, currentZoom)
 
       const north = Math.max(p1.lat, p2.lat)
       const south = Math.min(p1.lat, p2.lat)
@@ -152,6 +201,9 @@ export function initBoundingBox() {
       if (overlay) overlay.remove()
       overlay = null
       rect = null
+      label = null
+      currentCenter = null
+      currentZoom = 0
     }
 
     window.addEventListener('mousemove', onMove)
