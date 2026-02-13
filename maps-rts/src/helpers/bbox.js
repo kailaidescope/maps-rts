@@ -86,7 +86,6 @@ export function initBoundingBox() {
     if (!(e.button === 1 || (e.button === 0 && e.altKey))) return
     e.preventDefault()
     e.stopPropagation()
-    
 
     if (!overlay) {
       overlay = document.createElement('div')
