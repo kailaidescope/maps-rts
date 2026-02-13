@@ -47,7 +47,7 @@ export default function SidebarReplacement({
 
             {subtitleText && <div className='crx-sidebar-subtitle'>{subtitleText}</div>}
 
-            {actions && actions.length > 0 && (
+            {false && actions && actions.length > 0 && (
                 <div className='crx-sidebar-actions'>
                     {actions.map((a, i) => (
                         <button
