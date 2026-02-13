@@ -1,3 +1,7 @@
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import SidebarReplace from '../components/SidebarReplace.jsx'
+
 function ensureStyles() {
   if (document.getElementById('crx-sidebar-styles')) return
   const s = document.createElement('style')
@@ -64,14 +68,12 @@ export function initSidebarReplace() {
         main?.firstElementChild?.firstElementChild?.firstElementChild ||
         main?.querySelector('button')
       if (!buttonImgWrapper) {
-        // wait up to 1500ms for a button to appear inside main
         const found = await waitFor(() => main.querySelector('button'), 1500)
         if (!found) console.warn('[CRXJS] Timed out waiting for button inside sidebar')
       }
       const btnWrap = main.querySelector('button') || buttonImgWrapper
       const image = btnWrap?.querySelector('img') || btnWrap?.firstElementChild
       if (!image) {
-        // wait up to 1500ms for a button to appear inside main
         const found = await waitFor(() => btnWrap.querySelector('img'), 1500)
         if (!found) console.warn('[CRXJS] Timed out waiting for img inside sidebar')
       }
@@ -89,124 +91,55 @@ export function initSidebarReplace() {
       const subtitle = main.querySelector('h2')
       const actions = findActionsContainer(main)
 
-      // build replacement wrapper
-      const wrapper = document.createElement('div')
-      wrapper.className = 'crx-sidebar-replace'
-
-      // For visuals, clone cover/title/subtitle. For action buttons we clone visually
-      // but delegate clicks to the original buttons which we move into a hidden holder
-      if (coverImg || coverBtn) {
-        // ensure hidden holder exists before moving originals
-        let hidden = document.getElementById('crx-sidebar-hidden')
-        if (!hidden) {
-          hidden = document.createElement('div')
-          hidden.id = 'crx-sidebar-hidden'
-          hidden.style.cssText =
-            'position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;'
-          document.body.appendChild(hidden)
-        }
-
-        const cwrap = document.createElement('div')
-        cwrap.className = 'crx-sidebar-cover'
-
-        if (coverBtn) {
-          // move original into hidden holder to preserve handlers
-          hidden.appendChild(coverBtn)
-        }
-
-        if (coverImg) {
-          // clone the image itself for visuals, scale to fit
-          const imgClone = coverImg.cloneNode(true)
-          imgClone.removeAttribute('id')
-          imgClone.style.width = '100%'
-          imgClone.style.height = 'auto'
-          imgClone.style.position = 'static'
-          imgClone.style.transform = 'none'
-          // delegate click to original button if available
-          if (coverBtn) {
-            imgClone.addEventListener('click', ev => {
-              ev.preventDefault()
-              ev.stopPropagation()
-              try {
-                coverBtn.click()
-              } catch (e) {}
-            })
-          }
-          cwrap.appendChild(imgClone)
-        }
-
-        wrapper.appendChild(cwrap)
+      // ensure hidden holder exists before moving originals
+      let hidden = document.getElementById('crx-sidebar-hidden')
+      if (!hidden) {
+        hidden = document.createElement('div')
+        hidden.id = 'crx-sidebar-hidden'
+        hidden.style.cssText =
+          'position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;'
+        document.body.appendChild(hidden)
       }
 
-      if (title) {
-        const t = document.createElement('div')
-        t.className = 'crx-sidebar-title'
-        const titleClone = title.cloneNode(true)
-        t.appendChild(titleClone)
-        wrapper.appendChild(t)
-      }
+      // move originals into hidden holder to preserve handlers
+      if (coverBtn) hidden.appendChild(coverBtn)
+      if (actions) hidden.appendChild(actions)
 
-      if (subtitle) {
-        const s = document.createElement('div')
-        s.className = 'crx-sidebar-subtitle'
-        const subClone = subtitle.cloneNode(true)
-        s.appendChild(subClone)
-        wrapper.appendChild(s)
-      }
+      const coverSrc = coverImg?.src || null
+      const titleHtml = title ? title.innerHTML : null
+      const subtitleHtml = subtitle ? subtitle.innerHTML : null
 
-      if (actions) {
-        // ensure a hidden holder exists on the page to keep originals (so handlers remain attached)
-        let hidden = document.getElementById('crx-sidebar-hidden')
-        if (!hidden) {
-          hidden = document.createElement('div')
-          hidden.id = 'crx-sidebar-hidden'
-          hidden.style.cssText =
-            'position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;'
-          document.body.appendChild(hidden)
+      const origButtons = actions ? Array.from(actions.querySelectorAll('button')) : []
+      const actionItems = origButtons.map(ob => {
+        const label = (ob.getAttribute('aria-label') || ob.textContent || '').trim()
+        return {
+          label,
+          onClick: () => {
+            try {
+              ob.click()
+            } catch (e) {}
+          },
         }
+      })
 
-        // move original actions into hidden holder
-        hidden.appendChild(actions)
-
-        // create visual clone and wire clicks to originals
-        const a = document.createElement('div')
-        a.className = 'crx-sidebar-actions'
-        const actionsClone = actions.cloneNode(true)
-        a.appendChild(actionsClone)
-
-        // delegate clicks from clone to original buttons by matching aria-label or text
-        const origButtons = Array.from(actions.querySelectorAll('button'))
-        const cloneButtons = Array.from(actionsClone.querySelectorAll('button'))
-        cloneButtons.forEach(cb => {
-          const lab = (cb.getAttribute('aria-label') || cb.textContent || '').trim()
-          const match = origButtons.find(ob => {
-            const obLab = (ob.getAttribute('aria-label') || ob.textContent || '').trim()
-            return obLab === lab || (lab && obLab.indexOf(lab) !== -1)
-          })
-          if (match) {
-            cb.addEventListener('click', ev => {
-              ev.preventDefault()
-              ev.stopPropagation()
-              try {
-                match.click()
-              } catch (e) {}
-            })
-          }
-        })
-
-        wrapper.appendChild(a)
-      }
-
-      const hello = document.createElement('div')
-      hello.className = 'crx-hello'
-      hello.textContent = 'Hello World'
-      wrapper.appendChild(hello)
-
-      // remove everything from main and attach our wrapper
+      // clear main and render React component
       while (main.firstChild) main.removeChild(main.firstChild)
-      main.appendChild(wrapper)
+      const host = document.createElement('div')
+      main.appendChild(host)
+
+      const root = createRoot(host)
+      root.render(
+        React.createElement(SidebarReplace, {
+          coverSrc,
+          titleHtml,
+          subtitleHtml,
+          actions: actionItems,
+        })
+      )
       main.dataset.crxReplaced = '1'
-      console.log('[CRXJS] Sidebar content replaced')
+      // store root for potential cleanup
+      main.__crxRoot = root
+      console.log('[CRXJS] Sidebar content replaced (React)')
     } catch (err) {
       console.error('[CRXJS] Sidebar replace failed', err)
     }
