@@ -23,22 +23,19 @@ export default function SidebarReplace({ coverSrc, titleHtml, subtitleHtml, acti
 
       if (coverSrc != null && !prev.coverSrc) next.coverSrc = coverSrc
 
-      const incomingTitleText =
-        titleHtml && typeof titleHtml === 'object' && 'textContent' in titleHtml
-          ? titleHtml.textContent
-          : typeof titleHtml === 'string'
-            ? titleHtml
-            : null
+      const incomingTitleText = titleHtml
+        ? typeof titleHtml === 'string'
+          ? titleHtml
+          : titleHtml.textContent || titleHtml.innerText || String(titleHtml)
+        : null
       if (incomingTitleText != null && !prev.titleText) next.titleText = incomingTitleText
 
-      const incomingSubtitleText =
-        subtitleHtml && typeof subtitleHtml === 'object' && 'textContent' in subtitleHtml
-          ? subtitleHtml.textContent
-          : typeof subtitleHtml === 'string'
-            ? subtitleHtml
-            : null
-      if (incomingSubtitleText != null && !prev.subtitleText)
-        next.subtitleText = incomingSubtitleText
+      const incomingSubtitleText = subtitleHtml
+        ? typeof subtitleHtml === 'string'
+          ? subtitleHtml
+          : subtitleHtml.textContent || subtitleHtml.innerText || String(subtitleHtml)
+        : null
+      if (incomingSubtitleText != null && !prev.subtitleText) next.subtitleText = incomingSubtitleText
 
       if (
         actions != null &&
@@ -53,7 +50,7 @@ export default function SidebarReplace({ coverSrc, titleHtml, subtitleHtml, acti
     })
 
     console.log('[CRXJS] State update scheduled', stateSetTimes.current)
-    stateSetTimes.current++
+    stateSetTimes.current = stateSetTimes.current + 1
   }, [coverSrc, titleHtml, subtitleHtml, actions])
 
   useEffect(() => {
@@ -63,15 +60,10 @@ export default function SidebarReplace({ coverSrc, titleHtml, subtitleHtml, acti
   return (
     <div id='crx-sidebar-replace' className='crx-sidebar-replace'>
       {(() => {
-        const cover = state.coverSrc ?? coverSrc
-        const titleText =
-          state.titleText ??
-          (titleHtml && (typeof titleHtml === 'object' ? titleHtml.textContent : titleHtml))
-        const subtitleText =
-          state.subtitleText ??
-          (subtitleHtml &&
-            (typeof subtitleHtml === 'object' ? subtitleHtml.textContent : subtitleHtml))
-        const activeActions = state.actions ?? actions
+        const cover = state.coverSrc || null
+        const titleText = state.titleText ?? ''
+        const subtitleText = state.subtitleText ?? ''
+        const activeActions = state.actions ?? []
 
         return (
           <>

@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './views/App.jsx'
 import initBoundingBox from '../helpers/bbox.js'
-import initSidebarReplace from '../helpers/sidebarReplace.js'
+import initSidebarReplace from '../helpers/sidebarReplace.jsx'
 
 console.log('[CRXJS] Hello world from content script!')
 
