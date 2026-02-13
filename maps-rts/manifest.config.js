@@ -8,20 +8,19 @@ export default defineManifest({
   icons: {
     48: 'public/logo.png',
   },
-  permissions: [
-    'sidePanel',
-    'contentSettings',
-  ],
+  permissions: ['sidePanel', 'contentSettings'],
   action: {
     default_icon: {
       48: 'public/logo.png',
     },
     default_popup: 'src/popup/index.html',
   },
-  content_scripts: [{
-    js: ['src/content/main.jsx'],
-    matches: ['https://*/*'],
-  }],
+  content_scripts: [
+    {
+      js: ['src/content/main.jsx'],
+      matches: ['https://www.google.com/maps/*', 'https://maps.google.com/*'],
+    },
+  ],
   side_panel: {
     default_path: 'src/sidepanel/index.html',
   },
