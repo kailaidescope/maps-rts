@@ -160,7 +160,7 @@ export function initBoundingBox() {
 
   // attach to document to catch clicks on the map
   document.addEventListener('mousedown', onMouseDown, true)
-  console.log('[CRXJS] Bounding box helper initialized 2')
+  console.log('[CRXJS] Bounding box helper initialized')
 }
 
 export default initBoundingBox
