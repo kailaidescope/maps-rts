@@ -72,7 +72,14 @@ export default function SidebarReplacement({
                 <button onClick={() => addBuilding('Barracks', 2)}>Add Barracks (Lv 2)</button>
                 <button onClick={() => addBuilding('Market', 1)}>Add Market (Lv 1)</button>
                 <button onClick={() => addBuilding('Castle', 1)}>Add Castle (Lv 1)</button>
-                <button onClick={() => addBuilding('Temple', 3)}>Add Temple (Lv 3)</button>
+                <button
+                    onClick={() => {
+                        console.log('Add temple')
+                        addBuilding('Temple', 3)
+                    }}
+                >
+                    Add Temple (Lv 3)
+                </button>
                 <button
                     id='world-annihilator-button'
                     onClick={() => addBuilding('World Annihilator', 10)}

@@ -283,6 +283,12 @@ export default function SidebarManager({ children }) {
                 setCurrentWidth(styles.width)
                 setCurrentTransform(styles.transform)
                 setCurrentTransition(styles.transition)
+                /*                 console.log('[CRXJS] Detected Google sidebar wrapper with styles', {
+                    styles,
+                    width: styles.width,
+                    transform: styles.transform,
+                    transition: styles.transition,
+                }) */
             }
         })
         obs.observe(document.body, { childList: true, subtree: true, attributes: true })

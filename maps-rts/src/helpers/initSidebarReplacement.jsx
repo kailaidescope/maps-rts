@@ -33,7 +33,7 @@ export function initSidebarReplacement() {
         managerHost.id = 'crx-wrapper'
         // keep offscreen and non-interfering
         managerHost.style.cssText =
-            'position:fixed; left:0; top:0; pointer-events:none; width: 1px; height: 1px; display: block;'
+            'position:fixed; left:0; top:0; width: 1px; height: 1px; display: block;'
         clickableArea.appendChild(managerHost)
     }
 
