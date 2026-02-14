@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
+import logo from '../../public/logo.png'
 import './SidebarReplacement.scss'
 
 export default function SidebarReplacement({
@@ -37,9 +38,13 @@ export default function SidebarReplacement({
 
     return (
         <div id='crx-sidebar-replace' className='crx-sidebar-replace'>
-            {coverSrc && (
+            {coverSrc ? (
                 <div className='crx-sidebar-cover'>
                     <img src={coverSrc} alt='' style={{ width: '100%', height: 'auto' }} />
+                </div>
+            ) : (
+                <div className='crx-sidebar-cover'>
+                    <img src={logo} alt='' style={{ width: '100%', height: 'auto' }} />
                 </div>
             )}
 
@@ -87,7 +92,7 @@ export default function SidebarReplacement({
                     World Annihilator
                 </button>
             </div>
-            <div className='crx-hello'>Constructed Buildings:</div>
+            <div className='crx-sidebar-replacement-divider'>Constructed Buildings</div>
 
             {/* Buildings list for this city */}
             <div className='crx-buildings-list'>

@@ -31,9 +31,10 @@ export default function SidebarManager({ children }) {
         actions: [],
     })
     const [googleSidebarWrapper, setGoogleSidebarWrapper] = useState(null)
-    const [currentWidth, setCurrentWidth] = useState('200px')
-    const [currentTransform, setCurrentTransform] = useState('translateX(0)')
+    const [currentWidth, setCurrentWidth] = useState('400px')
+    const [currentTransform, setCurrentTransform] = useState('matrix(1, 0, 0, 1, -407.995, 0)')
     const [currentTransition, setCurrentTransition] = useState('transform 0.3s ease-out')
+    const [currentDisplay, setCurrentDisplay] = useState('flex')
 
     const [cities, setCities] = useState({})
 
@@ -280,10 +281,16 @@ export default function SidebarManager({ children }) {
                 setGoogleSidebarWrapper(foundGoogleSidebarWrapper)
 
                 const styles = getComputedStyle(foundGoogleSidebarWrapper)
+
                 setCurrentWidth(styles.width)
                 setCurrentTransform(styles.transform)
-                setCurrentTransition(styles.transition)
-                /*                 console.log('[CRXJS] Detected Google sidebar wrapper with styles', {
+                setCurrentTransition(styles.transition + ', width 0.3s ease-out')
+                if (styles.width == '0px' || styles.width == '0') {
+                    setCurrentDisplay('none')
+                } else {
+                    setCurrentDisplay('block')
+                }
+                /* console.log('[CRXJS] Detected Google sidebar wrapper with styles', {
                     styles,
                     width: styles.width,
                     transform: styles.transform,
@@ -319,6 +326,7 @@ export default function SidebarManager({ children }) {
                 width: currentWidth,
                 transform: currentTransform,
                 transition: currentTransition,
+                display: currentDisplay,
             }}
         >
             {children}

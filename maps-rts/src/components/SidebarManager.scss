@@ -2,6 +2,9 @@
 
 #crx-sidebar-manager {
     position: fixed;
+    display: flex;
+    box-sizing: border-box;
+    flex-direction: column;
     left: 0;
     top: 0;
     pointer-events: none;

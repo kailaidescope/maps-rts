@@ -1,8 +1,14 @@
 @use '../assets/Constants.scss' as *;
 
 #crx-sidebar-replace {
+    .crx-sidebar-cover {
+        width: 100%;
+        max-height: 22rem;
+        object-fit: cover;
+    }
+
     .crx-test-buttons {
-        padding: 5% 0;
+        padding: 5% 1rem;
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
@@ -38,10 +44,19 @@
         }
     }
 
+    .crx-sidebar-replacement-divider {
+        padding: 1rem 1rem;
+        margin: 2rem 1rem 0.2rem 1rem;
+        font-weight: 600;
+        color: $TextBlack;
+        font-size: 1rem;
+        text-align: center;
+        background-color: $PlainsGreen;
+        border-radius: 0.5rem;
+    }
+
     .crx-buildings-list {
-        padding: 12px 0 0 0;
-        margin-top: 8px;
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
+        padding: 1rem 2rem;
 
         .crx-buildings-title {
             font-weight: 600;
